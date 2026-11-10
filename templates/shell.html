@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% set admin = current_user.role == 'Admin' %}
+{% macro link(endpoint, icon, label, match=None) %}
+  {% set on = request.endpoint in (match or [endpoint]) %}
+  <a class="side-link {{ 'active' if on }}" href="{{ url_for(endpoint) }}"><span class="i">{{ icon }}</span>{{ label }}</a>
+{% endmacro %}
+{% block body %}
+<div class="shell" id="shell">
+  <aside class="sidebar wood">
+    <a href="{{ url_for('index') }}" class="brand"><span class="logo">📚</span> Woodgrain</a>
+    {% if admin %}
+      <div class="side-label">Overview</div>
+      {{ link('admin_dashboard', '🏠', 'Dashboard') }}
+      <div class="side-label">Library</div>
+      {{ link('manage_books', '📖', 'Books', ['manage_books','add_book','edit_book']) }}
+      {{ link('manage_members', '👥', 'Members', ['manage_members','add_member','edit_member','member_detail']) }}
+      {{ link('manage_loans', '🔄', 'Issue & Return') }}
+      {{ link('reports_page', '📊', 'Reports') }}
+      <div class="side-label">Developers</div>
+      {{ link('api_page', '🔑', 'API & Keys') }}
+    {% else %}
+      <div class="side-label">My library</div>
+      {{ link('member_dashboard', '🏠', 'My Dashboard') }}
+      {{ link('catalog', '📖', 'Browse Books', ['catalog','book_detail']) }}
+      {{ link('member_profile', '👤', 'My Profile') }}
+    {% endif %}
+    <div class="side-user">
+      <div class="who"><div class="avatar">{{ current_user.username[:1]|upper }}</div>
+        <div><div class="nm">{{ current_user.username }}</div><div class="rl">{{ current_user.role }}</div></div></div>
+      <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-wood btn-sm btn-block" type="submit">Log out</button></form>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="content">
+    <button class="btn btn-wood btn-sm menu-btn no-print" id="menu-btn" type="button">☰ Menu</button>
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

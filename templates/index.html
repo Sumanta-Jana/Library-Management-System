@@ -1,0 +1,49 @@
+{% extends "public.html" %}
+{% from "partials/_macros.html" import cover, stock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="badge yellow mb" style="display:inline-block">📚 Your friendly neighbourhood library</span>
+    <h1>Find your next <span>favourite</span> book.</h1>
+    <p class="lead">Browse the shelves, borrow in seconds and keep track of every due date — all in one cosy, easy-to-use place.</p>
+    <div class="cta">
+      <a class="btn" href="{{ url_for('catalog') }}">Browse the shelves</a>
+      {% if not current_user %}<a class="btn btn-yellow" href="{{ url_for('register') }}">Become a member</a>{% endif %}
+    </div>
+  </div>
+  <div class="shelf-art wood" aria-hidden="true">
+    {% for heights in [[88,110,96,118,80,104,92,112,84], [100,84,116,92,108,78,114,90,102]] %}
+    <div class="shelf-row">
+      {% for h in heights %}<div class="spine" style="height:{{ h }}px;background:var({{ ['--clay-red','--clay-yellow','--clay-green','--clay-blue','--clay-purple','--clay-pink','--clay-teal'][(loop.index0 + loop.length) % 7] }})"></div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat c-yellow"><div class="num">{{ stats.total_books }}</div><div class="lbl">Book titles</div><span class="ico">📖</span></div>
+  <div class="stat c-green"><div class="num">{{ stats.available_copies }}</div><div class="lbl">Copies ready to borrow</div><span class="ico">✅</span></div>
+  <div class="stat c-blue"><div class="num">{{ stats.total_members }}</div><div class="lbl">Happy members</div><span class="ico">👥</span></div>
+  <div class="stat c-pink"><div class="num">{{ stats.total_loans }}</div><div class="lbl">Books borrowed</div><span class="ico">🔄</span></div>
+</section>
+
+{% if featured %}
+<div class="card-head"><h2>Popular right now</h2><a class="btn btn-ghost btn-sm" href="{{ url_for('catalog') }}">See all books →</a></div>
+<div class="book-grid">
+  {% for b in featured %}
+  <a class="book-card" href="{{ url_for('book_detail', book_id=b.book_id) }}">
+    {{ cover(b) }}
+    <h3>{{ b.title }}</h3><div class="meta">{{ b.author }}</div>
+    <div class="foot">{{ stock(b) }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<section class="feature-grid">
+  <div class="card feature" style="--c:var(--clay-yellow)"><div class="blob">🔎</div><h3>Search instantly</h3><p class="muted small">Find books by title, author, ISBN or category.</p></div>
+  <div class="card feature" style="--c:var(--clay-green)"><div class="blob">🔁</div><h3>Renew online</h3><p class="muted small">Extend a loan by {{ RENEW_DAYS }} days, up to {{ MAX_RENEWALS }} times.</p></div>
+  <div class="card feature" style="--c:var(--clay-blue)"><div class="blob">⏰</div><h3>Never miss a date</h3><p class="muted small">Your dashboard highlights what is due soon.</p></div>
+  <div class="card feature" style="--c:var(--clay-pink)"><div class="blob">🔐</div><h3>Safe &amp; private</h3><p class="muted small">Encrypted passwords and protected forms.</p></div>
+</section>
+{% endblock %}

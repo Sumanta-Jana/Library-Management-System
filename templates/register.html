@@ -1,0 +1,24 @@
+{% extends "public.html" %}
+{% block title %}Join{% endblock %}
+{% block content %}
+<div class="auth"><div class="card auth-card" style="width:min(640px,100%)">
+  <div class="badge-top">✨</div>
+  <h1>Join the library</h1><p class="sub">Free membership — start borrowing today</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid-2">
+      <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" value="{{ form.name }}" required></div>
+      <div class="field"><label for="username">Username</label><input id="username" name="username" type="text" value="{{ form.username }}" autocomplete="username" required><div class="hint">3–20 letters, numbers or _</div></div>
+      <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ form.email }}" required></div>
+      <div class="field"><label for="phone">Phone <span class="muted">(optional)</span></label><input id="phone" name="phone" type="tel" value="{{ form.phone }}"><div class="hint">10–15 digits</div></div>
+    </div>
+    <div class="field"><label for="address">Address <span class="muted">(optional)</span></label><input id="address" name="address" type="text" value="{{ form.address }}"></div>
+    <div class="grid-2">
+      <div class="field"><label for="password">Password</label><div class="pw-wrap"><input id="password" name="password" type="password" autocomplete="new-password" required><button type="button" data-toggle-pw>Show</button></div><div class="hint">At least 6 characters</div></div>
+      <div class="field"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required></div>
+    </div>
+    <button class="btn btn-block" type="submit">Create my account</button>
+  </form>
+  <p class="auth-foot">Already a member? <a href="{{ url_for('login') }}">Log in</a></p>
+</div></div>
+{% endblock %}

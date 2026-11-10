@@ -1,0 +1,19 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>👤 My profile</h1><p>Keep your details up to date.</p></div></div>
+<div class="two-col" style="grid-template-columns:1.3fr 1fr">
+  <form class="card" method="post">{{ csrf() }}<h2 class="mb">Personal details</h2>
+    <div class="grid-2"><div class="field"><label>Full name</label><input name="name" type="text" value="{{ form.name }}" required></div>
+    <div class="field"><label>Email</label><input name="email" type="email" value="{{ form.email }}" required></div>
+    <div class="field"><label>Phone</label><input name="phone" type="tel" value="{{ form.phone }}"></div>
+    <div class="field"><label>Address</label><input name="address" type="text" value="{{ form.address }}"></div></div>
+    <button class="btn" type="submit">Save changes</button></form>
+  <form class="card" method="post" action="{{ url_for('change_password') }}">{{ csrf() }}<h2 class="mb">Change password</h2>
+    <div class="field"><label>Current password</label><input name="old_password" type="password" autocomplete="current-password" required></div>
+    <div class="field"><label>New password</label><input name="new_password" type="password" minlength="6" autocomplete="new-password" required></div>
+    <div class="field"><label>Confirm new password</label><input name="confirm_password" type="password" minlength="6" autocomplete="new-password" required></div>
+    <button class="btn btn-yellow" type="submit">Update password</button></form>
+</div>
+{% endblock %}

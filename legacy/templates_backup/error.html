@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+
+{% block title %}Error {{ code }} | Library Management System{% endblock %}
+
+{% block content %}
+
+<section class="error-section">
+
+    <div class="error-card">
+
+        <h1>{{ code }}</h1>
+
+        {% if code == 403 %}
+            <h2>Access Forbidden</h2>
+        {% elif code == 404 %}
+            <h2>Page Not Found</h2>
+        {% elif code == 400 %}
+            <h2>Request Expired</h2>
+        {% else %}
+            <h2>Something Went Wrong</h2>
+        {% endif %}
+
+        <p>{{ message }}</p>
+
+        <a href="{{ url_for('index') }}" class="btn">
+            Return to Home
+        </a>
+
+        {% if current_user %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                Go to Dashboard
+            </a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-secondary">
+                Login
+            </a>
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

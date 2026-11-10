@@ -1,0 +1,46 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro cover(book, small=false) %}
+<div class="cover k{{ book.book_id % 7 }}{% if small %} sm{% endif %}">
+  {% if book.cover_image %}
+    <img src="{{ url_for('static', filename=book.cover_image) }}" alt="Cover of {{ book.title }}" loading="lazy">
+  {% else %}
+    <div class="ct">{{ book.title }}</div>
+    <div class="ca">{{ book.author }}</div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro stock(book) %}
+  {% if book.available_copies > 0 %}
+    <span class="badge green">{{ book.available_copies }} available</span>
+  {% else %}
+    <span class="badge red">All out</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro loan_status(loan) %}
+  {% if not loan.is_active %}<span class="badge blue">Returned</span>
+  {% elif loan.is_overdue %}<span class="badge red">{{ loan.overdue_days }}d overdue</span>
+  {% elif loan.days_left is not none and loan.days_left <= 3 %}<span class="badge yellow">Due in {{ loan.days_left }}d</span>
+  {% else %}<span class="badge green">On time</span>{% endif %}
+{% endmacro %}
+
+{% macro pager(result, endpoint, args) %}
+{% if result.pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% set base = args.to_dict() %}
+  {% if result.page > 1 %}<a href="{{ url_for(endpoint, **dict(base, page=result.page - 1)) }}">← Prev</a>{% endif %}
+  {% for n in range(1, result.pages + 1) %}
+    {% if n == result.page %}<span class="cur">{{ n }}</span>
+    {% elif n == 1 or n == result.pages or (n - result.page)|abs <= 1 %}<a href="{{ url_for(endpoint, **dict(base, page=n)) }}">{{ n }}</a>
+    {% elif (n - result.page)|abs == 2 %}<span>…</span>{% endif %}
+  {% endfor %}
+  {% if result.page < result.pages %}<a href="{{ url_for(endpoint, **dict(base, page=result.page + 1)) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro empty(icon, text) %}
+<div class="empty"><div class="big">{{ icon }}</div><p>{{ text }}</p></div>
+{% endmacro %}

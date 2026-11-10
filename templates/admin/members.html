@@ -1,0 +1,20 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, pager, empty %}
+{% block title %}Members{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>👥 Members</h1><p>{{ result.total }} registered member{{ '' if result.total == 1 else 's' }}</p></div><a class="btn" href="{{ url_for('add_member') }}">＋ Add member</a></div>
+<form class="filters card" method="get" style="padding:1rem"><div class="grow"><label for="q">Search</label><input id="q" type="search" name="q" value="{{ args.get('q','') }}" placeholder="Name, email, phone or member ID…"></div><button class="btn btn-yellow" type="submit">Search</button>{% if args %}<a class="btn btn-ghost" href="{{ url_for('manage_members') }}">Clear</a>{% endif %}</form>
+<div class="card">{% if result["items"] %}
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>Member</th><th>Contact</th><th>Joined</th><th>Login</th><th>Loans</th><th class="right">Actions</th></tr></thead><tbody>
+{% for m in result["items"] %}<tr>
+  <td>#{{ m.member_id }}</td>
+  <td><div class="cell-book"><div class="avatar">{{ m.name[:1]|upper }}</div><a class="title" href="{{ url_for('member_detail', member_id=m.member_id) }}">{{ m.name }}</a></div></td>
+  <td><div>{{ m.email or '—' }}</div><div class="muted small">{{ m.phone or '' }}</div></td>
+  <td class="nowrap">{{ m.join_date|nice_date }}</td>
+  <td>{% if m.username %}<span class="badge green">{{ m.username }}</span>{% else %}<span class="badge">none</span>{% endif %}</td>
+  <td>{% if m.active_loans %}<span class="badge yellow">{{ m.active_loans }} out</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+  <td><div class="actions" style="justify-content:flex-end"><a class="btn btn-blue btn-sm" href="{{ url_for('member_detail', member_id=m.member_id) }}">View</a><a class="btn btn-yellow btn-sm" href="{{ url_for('edit_member', member_id=m.member_id) }}">Edit</a>
+    <form method="post" action="{{ url_for('delete_member', member_id=m.member_id) }}" data-confirm="Delete {{ m.name }} and their login? This cannot be undone.">{{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Delete</button></form></div></td>
+</tr>{% endfor %}</tbody></table></div>{{ pager(result, 'manage_members', args) }}
+{% else %}{{ empty('👥', 'No members found.') }}{% endif %}</div>
+{% endblock %}

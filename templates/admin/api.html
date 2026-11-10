@@ -1,0 +1,63 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, empty %}
+{% block title %}API & Keys{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>🔑 API &amp; Keys</h1><p>Let other apps read and manage the library securely.</p></div></div>
+
+{% if new_key %}
+<div class="keybox"><strong>🎉 Your new API key — copy it now, it will never be shown again:</strong>
+  <code id="new-key">{{ new_key }}</code>
+  <button class="btn btn-sm btn-yellow" type="button" data-copy="#new-key">Copy key</button></div>
+{% endif %}
+
+<div class="two-col" style="grid-template-columns:1fr 1.3fr">
+  <div class="card"><h2 class="mb">Create a key</h2>
+    <form method="post" action="{{ url_for('api_create_key') }}">{{ csrf() }}
+      <div class="field"><label for="name">Key name</label><input id="name" name="name" type="text" maxlength="60" placeholder="e.g. Mobile app" required></div>
+      <button class="btn" type="submit">Generate key</button></form>
+    <p class="hint mt">Only a fingerprint (hash) of the key is stored, so even a leaked database cannot reveal it.</p></div>
+  <div class="card"><h2 class="mb">Your keys</h2>
+    {% if keys %}<div class="table-wrap"><table><thead><tr><th>Name</th><th>Key</th><th>Last used</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for k in keys %}<tr><td class="title">{{ k.name }}</td><td><code class="inline">{{ k.key_prefix }}…</code></td><td class="nowrap small">{{ k.last_used or 'never' }}</td>
+      <td>{% if k.active %}<span class="badge green">Active</span>{% else %}<span class="badge red">Revoked</span>{% endif %}</td>
+      <td><div class="actions">{% if k.active %}<form method="post" action="{{ url_for('api_revoke_key', key_id=k.key_id) }}" data-confirm="Revoke “{{ k.name }}”? Apps using it will stop working.">{{ csrf() }}<button class="btn btn-yellow btn-sm">Revoke</button></form>{% endif %}
+      <form method="post" action="{{ url_for('api_delete_key', key_id=k.key_id) }}" data-confirm="Delete this key permanently?">{{ csrf() }}<button class="btn btn-danger btn-sm">Delete</button></form></div></td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{{ empty('🗝️','No keys yet. Create your first one.') }}{% endif %}</div>
+</div>
+
+<div class="card mb"><h2 class="mb">🧪 Try the API</h2>
+  <div class="filters" style="margin:0">
+    <div class="grow"><label for="t-key">API key</label><input id="t-key" type="password" placeholder="lib_…" autocomplete="off"></div>
+    <div><label for="t-path">Endpoint</label><select id="t-path"><option>/api/v1/health</option><option>/api/v1/stats</option><option>/api/v1/books</option><option>/api/v1/members</option><option>/api/v1/loans?status=all</option><option>/api/v1/reports/overdue</option></select></div>
+    <button class="btn btn-green" type="button" id="t-send">Send GET</button></div>
+  <pre class="mt" id="t-out">Response will appear here…</pre></div>
+
+<div class="card"><h2 class="mb">📘 Endpoints</h2>
+  <p class="muted mb">Base URL <code class="inline">{{ base_url }}/api/v1</code> · send the key as <code class="inline">X-API-Key: lib_…</code> (or <code class="inline">Authorization: Bearer lib_…</code>). Every reply is JSON: <code class="inline">{"ok": true, "data": …}</code></p>
+  {% for verb, path, what in [
+    ('GET','/health','Check the service and database (no key needed)'),
+    ('GET','/books?q=&category=&available=1&page=1','Search / list books'),
+    ('GET','/books/{id}','One book'),
+    ('POST','/books','Add a book (title, author, isbn, total_copies …)'),
+    ('PUT','/books/{id}','Update a book'),
+    ('DELETE','/books/{id}','Delete a book without active loans'),
+    ('GET','/members?q=','List members'),
+    ('GET','/members/{id}','Member with borrowing summary'),
+    ('POST','/members','Add a member (name, email …)'),
+    ('PUT','/members/{id}','Update a member'),
+    ('DELETE','/members/{id}','Delete a member'),
+    ('GET','/loans?status=active|overdue|returned|all','List loans'),
+    ('POST','/loans','Issue a book {"book_id":1,"member_id":2}'),
+    ('POST','/loans/{id}/return','Return a book (returns the fine)'),
+    ('POST','/loans/{id}/renew','Extend due date by ' ~ RENEW_DAYS ~ ' days'),
+    ('GET','/stats','Library-wide statistics'),
+    ('GET','/reports/overdue','All overdue loans')] %}
+  <div class="endpoint"><span class="verb {{ verb }}">{{ verb }}</span><code>{{ path }}</code><span class="muted small" style="margin-left:auto;text-align:right">{{ what }}</span></div>{% endfor %}
+  <h3 class="mt mb">Example</h3>
+  <pre id="curl-ex">curl {{ base_url }}/api/v1/books?q=python \
+  -H "X-API-Key: YOUR_KEY"
+
+curl -X POST {{ base_url }}/api/v1/loans \
+  -H "X-API-Key: YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"book_id": 1, "member_id": 2}'</pre></div>
+{% endblock %}

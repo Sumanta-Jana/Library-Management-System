@@ -1,0 +1,15 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf %}
+{% block title %}{{ 'Edit member' if member else 'Add member' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ '✏️ Edit member' if member else '🧑 Add a member' }}</h1><p>{{ 'Member #' ~ member.member_id if member else 'The member can get a login afterwards from their profile page.' }}</p></div><a class="btn btn-ghost" href="{{ url_for('manage_members') }}">← Back</a></div>
+<form class="card" method="post" style="max-width:700px">{{ csrf() }}
+  <div class="grid-2">
+    <div class="field"><label for="name">Full name *</label><input id="name" name="name" type="text" value="{{ form.name }}" required></div>
+    <div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" value="{{ form.email }}" required></div>
+    <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" value="{{ form.phone }}"><div class="hint">10–15 digits</div></div>
+    <div class="field"><label for="address">Address</label><input id="address" name="address" type="text" value="{{ form.address }}"></div>
+  </div>
+  <div class="actions"><button class="btn" type="submit">{{ 'Save changes' if member else 'Add member' }}</button><a class="btn btn-ghost" href="{{ url_for('manage_members') }}">Cancel</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Home | Library Management System{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+        <h1>Welcome to Our Library</h1>
+
+        <p>
+            Discover books, explore knowledge, and manage
+            your borrowing activities with ease.
+        </p>
+
+        <div class="hero-buttons">
+            {% if current_user %}
+                {% if current_user.get('role') == 'Admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn">
+                        Admin Dashboard
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('member_dashboard') }}" class="btn">
+                        My Dashboard
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn">
+                    Login
+                </a>
+
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">
+                    Register
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <h2>Our Library Services</h2>
+
+    <div class="feature-container">
+
+        <div class="feature-card">
+            <h3>📚 Book Collection</h3>
+            <p>Explore and search for books available in our library.</p>
+        </div>
+
+        <div class="feature-card">
+            <h3>📖 Easy Borrowing</h3>
+            <p>Keep track of your issued books and return dates.</p>
+        </div>
+
+        <div class="feature-card">
+            <h3>👤 Member Account</h3>
+            <p>Manage your account and view your borrowing history.</p>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

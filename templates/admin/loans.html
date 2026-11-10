@@ -1,0 +1,28 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, loan_status, pager, empty %}
+{% block title %}Issue & Return{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>🔄 Issue &amp; Return</h1><p>Loans last {{ LOAN_DAYS }} days · fine ₹{{ FINE_PER_DAY }} per late day</p></div></div>
+<form class="card mb" method="post" action="{{ url_for('issue_loan') }}">{{ csrf() }}
+  <h2 class="mb">Issue a book</h2>
+  <div class="filters" style="margin:0">
+    <div class="grow"><label for="book_id">Book</label><select id="book_id" name="book_id" required style="width:100%"><option value="">Choose an available book…</option>{% for b in book_options %}<option value="{{ b.book_id }}">#{{ b.book_id }} · {{ b.title }} — {{ b.author }} ({{ b.available_copies }} left)</option>{% endfor %}</select></div>
+    <div class="grow"><label for="member_id">Member</label><select id="member_id" name="member_id" required style="width:100%"><option value="">Choose a member…</option>{% for m in member_options %}<option value="{{ m.member_id }}">#{{ m.member_id }} · {{ m.name }}</option>{% endfor %}</select></div>
+    <button class="btn btn-green" type="submit">Issue book</button>
+  </div>
+</form>
+<div class="tabs">{% for key, label in [('active','Issued'),('overdue','Overdue'),('returned','Returned'),('all','All')] %}<a class="tab {{ 'active' if status == key }}" href="{{ url_for('manage_loans', status=key) }}">{{ label }}</a>{% endfor %}</div>
+<form class="filters" method="get"><input type="hidden" name="status" value="{{ status }}"><div class="grow"><input type="search" name="q" value="{{ args.get('q','') }}" placeholder="Search book, member or loan number…"></div><button class="btn btn-yellow" type="submit">Search</button></form>
+<div class="card">{% if result["items"] %}
+<div class="table-wrap"><table><thead><tr><th>Loan</th><th>Book</th><th>Member</th><th>Issued</th><th>Due</th><th>Status</th><th class="right">Actions</th></tr></thead><tbody>
+{% for l in result["items"] %}<tr class="{{ 'row-overdue' if l.is_overdue }}">
+  <td>#{{ l.loan_id }}</td><td class="title">{{ l.title }}</td><td>{{ l.member_name }}</td>
+  <td class="nowrap">{{ l.issue_date|nice_date }}</td><td class="nowrap">{{ l.due_date|nice_date }}{% if l.renewals %} <span class="badge purple" title="Renewed">↻{{ l.renewals }}</span>{% endif %}</td>
+  <td>{{ loan_status(l) }}{% if l.current_fine %} <span class="badge red">{{ l.current_fine|inr }}</span>{% endif %}</td>
+  <td><div class="actions" style="justify-content:flex-end">{% if l.is_active %}
+    <form method="post" action="{{ url_for('return_loan', loan_id=l.loan_id) }}">{{ csrf() }}<button class="btn btn-green btn-sm" type="submit">Return</button></form>
+    {% if l.can_renew %}<form method="post" action="{{ url_for('renew_loan_admin', loan_id=l.loan_id) }}">{{ csrf() }}<button class="btn btn-blue btn-sm" type="submit">Renew</button></form>{% endif %}
+  {% else %}<span class="muted small">Returned {{ l.return_date|nice_date }}</span>{% endif %}</div></td>
+</tr>{% endfor %}</tbody></table></div>{{ pager(result, 'manage_loans', args) }}
+{% else %}{{ empty('📭', 'No loans in this view.') }}{% endif %}</div>
+{% endblock %}

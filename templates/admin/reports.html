@@ -1,0 +1,17 @@
+{% extends "shell.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>📊 Reports</h1><p>Live figures from the library database</p></div>
+  <div class="actions no-print"><a class="btn btn-yellow" href="{{ url_for('export_report', name=tab) }}">⬇ Export CSV</a><button class="btn btn-ghost" type="button" onclick="window.print()">🖨 Print</button></div></div>
+<section class="stats">
+  <div class="stat c-green"><div class="num">{{ stats.available_copies }}/{{ stats.total_copies }}</div><div class="lbl">Copies available</div></div>
+  <div class="stat c-blue"><div class="num">{{ stats.issued_books }}</div><div class="lbl">Issued</div></div>
+  <div class="stat c-red"><div class="num">{{ stats.overdue_books }}</div><div class="lbl">Overdue</div></div>
+  <div class="stat c-yellow"><div class="num">{{ stats.fines_collected|inr }}</div><div class="lbl">Fines collected</div></div>
+</section>
+<div class="tabs no-print">{% for key, label in tabs %}<a class="tab {{ 'active' if tab == key }}" href="{{ url_for('reports_page', tab=key) }}">{{ label }}</a>{% endfor %}</div>
+<div class="card"><h2 class="mb">{{ title }} <span class="badge">{{ rows|length }}</span></h2>
+{% if rows %}<div class="table-wrap"><table><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}</tr></thead><tbody>
+{% for r in rows %}<tr>{% for c in r %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+{% else %}<div class="empty"><div class="big">✨</div><p>Nothing to report here.</p></div>{% endif %}</div>
+{% endblock %}

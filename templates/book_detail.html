@@ -1,0 +1,31 @@
+{% extends "shell.html" if current_user else "public.html" %}
+{% from "partials/_macros.html" import cover, stock %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block content %}
+<p class="mb"><a class="muted" href="{{ url_for('catalog') }}">← Back to all books</a></p>
+<div class="detail">
+  <div>{{ cover(book) }}</div>
+  <div class="card">
+    <div class="actions mb">{{ stock(book) }}{% if book.category %}<span class="badge purple">{{ book.category }}</span>{% endif %}<span class="badge yellow">{{ book.loan_count }} loan{{ '' if book.loan_count == 1 else 's' }}</span></div>
+    <h1>{{ book.title }}</h1><p class="muted">by {{ book.author }}</p>
+    {% if book.description %}<p class="mt">{{ book.description }}</p>{% endif %}
+    <dl class="kv">
+      <dt>ISBN</dt><dd>{{ book.isbn or '—' }}</dd>
+      <dt>Publisher</dt><dd>{{ book.publisher or '—' }}</dd>
+      <dt>Published</dt><dd>{{ book.publication_year or '—' }}</dd>
+      <dt>Copies</dt><dd>{{ book.available_copies }} of {{ book.total_copies }} available</dd>
+    </dl>
+    {% if current_user and current_user.role == 'Admin' %}
+      <div class="actions"><a class="btn btn-yellow btn-sm" href="{{ url_for('edit_book', book_id=book.book_id) }}">✏️ Edit book</a><a class="btn btn-sm" href="{{ url_for('manage_loans') }}">Issue this book</a></div>
+    {% else %}
+      <p class="muted small">📍 To borrow this book, visit the library desk with your member ID{% if current_user %} ({{ current_user.member_id }}){% endif %}.</p>
+    {% endif %}
+  </div>
+</div>
+{% if history %}
+<div class="card mt"><h2 class="mb">Recent borrowing</h2>
+  <div class="table-wrap"><table><thead><tr><th>Loan</th><th>Member</th><th>Issued</th><th>Due</th><th>Status</th></tr></thead><tbody>
+  {% for h in history %}<tr><td>#{{ h.loan_id }}</td><td>{{ h.member_name }}</td><td>{{ h.issue_date|nice_date }}</td><td>{{ h.due_date|nice_date }}</td><td><span class="badge {{ 'blue' if h.return_date else 'green' }}">{{ h.status }}</span></td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endif %}
+{% endblock %}

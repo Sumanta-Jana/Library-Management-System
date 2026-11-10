@@ -1,0 +1,27 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, cover, stock, loan_status, empty %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Hello, {{ member.name.split(' ')[0] }} 👋</h1><p>Member #{{ member.member_id }} · since {{ member.join_date|nice_date }}</p></div><a class="btn btn-yellow" href="{{ url_for('catalog') }}">📖 Browse books</a></div>
+<section class="stats">
+  <div class="stat c-blue"><div class="num">{{ stats.borrowed }}</div><div class="lbl">Books borrowed</div><span class="ico">📚</span></div>
+  <div class="stat c-red"><div class="num">{{ stats.overdue }}</div><div class="lbl">Overdue</div><span class="ico">⏰</span></div>
+  <div class="stat c-yellow"><div class="num">{{ stats.pending_fine|inr }}</div><div class="lbl">Pending fine</div><span class="ico">💰</span></div>
+  <div class="stat c-green"><div class="num">{{ stats.total_read }}</div><div class="lbl">Books read so far</div><span class="ico">🏅</span></div>
+</section>
+<div class="card mb"><h2 class="mb">📚 My current books</h2>
+{% if current %}<div class="table-wrap"><table><thead><tr><th>Book</th><th>Issued</th><th>Due</th><th>Status</th><th>Fine</th><th></th></tr></thead><tbody>
+{% for l in current %}<tr class="{{ 'row-overdue' if l.is_overdue }}">
+  <td><div class="cell-book">{{ cover(l, true) }}<div><div class="title">{{ l.title }}</div><div class="muted small">{{ l.author }}</div></div></div></td>
+  <td class="nowrap">{{ l.issue_date|nice_date }}</td><td class="nowrap">{{ l.due_date|nice_date }}{% if l.renewals %} <span class="badge purple">↻{{ l.renewals }}</span>{% endif %}</td>
+  <td>{{ loan_status(l) }}</td><td>{{ l.current_fine|inr }}</td>
+  <td>{% if l.can_renew %}<form method="post" action="{{ url_for('member_renew', loan_id=l.loan_id) }}">{{ csrf() }}<button class="btn btn-blue btn-sm" type="submit">Renew +{{ RENEW_DAYS }}d</button></form>{% elif l.is_overdue %}<span class="muted small">Return at the desk</span>{% else %}<span class="muted small">Max renewals</span>{% endif %}</td>
+</tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('📖','You have no books right now. Time to find a new one!') }}{% endif %}</div>
+<div class="card mb"><h2 class="mb">🕘 Borrowing history</h2>
+{% if history %}<div class="table-wrap"><table><thead><tr><th>Book</th><th>Issued</th><th>Returned</th><th>Fine paid</th></tr></thead><tbody>
+{% for l in history %}<tr><td class="title">{{ l.title }}<div class="muted small" style="font-weight:400">{{ l.author }}</div></td><td>{{ l.issue_date|nice_date }}</td><td>{{ l.return_date|nice_date }}</td><td>{{ l.fine_amount|inr }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('🕘','Your returned books will be listed here.') }}{% endif %}</div>
+{% if suggestions %}<div class="card-head"><h2>✨ You might like</h2></div>
+<div class="book-grid">{% for b in suggestions %}<a class="book-card" href="{{ url_for('book_detail', book_id=b.book_id) }}">{{ cover(b) }}<h3>{{ b.title }}</h3><div class="meta">{{ b.author }}</div><div class="foot">{{ stock(b) }}</div></a>{% endfor %}</div>{% endif %}
+{% endblock %}

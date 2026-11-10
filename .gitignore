@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+library.db-wal
+library.db-shm
+static/uploads/covers/*
+!static/uploads/covers/.gitkeep

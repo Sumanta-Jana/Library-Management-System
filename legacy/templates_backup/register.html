@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Register | Library Management System{% endblock %}
+
+{% block content %}
+
+<section class="auth-section">
+    <div class="auth-card">
+
+        <h2>Create Your Account</h2>
+        <p>Join our library and explore our book collection.</p>
+
+        <form method="POST" action="{{ url_for('register') }}" id="register-form">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name"
+                       class="form-control"
+                       placeholder="Enter your full name"
+                       value="{{ form.get('name', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"
+                       class="form-control"
+                       placeholder="Choose a username"
+                       value="{{ form.get('username', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email"
+                       class="form-control"
+                       placeholder="Enter your email"
+                       value="{{ form.get('email', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone"
+                       class="form-control"
+                       placeholder="Enter your phone number"
+                       value="{{ form.get('phone', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <textarea id="address" name="address"
+                          class="form-control"
+                          placeholder="Enter your address"
+                          required>{{ form.get('address', '') }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password"
+                       class="form-control"
+                       placeholder="Create a password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password"
+                       name="confirm_password"
+                       class="form-control"
+                       placeholder="Confirm your password" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-full">
+                    Create Account
+                </button>
+            </div>
+
+        </form>
+
+        <p class="auth-link">
+            Already have an account?
+            <a href="{{ url_for('login') }}">Login here</a>
+        </p>
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="topnav wood">
+  <a href="{{ url_for('index') }}" class="brand"><span class="logo">📚</span> Woodgrain Library</a>
+  <nav class="navlinks">
+    <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Home</a>
+    <a href="{{ url_for('catalog') }}" class="{{ 'active' if request.endpoint in ('catalog','book_detail') }}">Browse books</a>
+    {% if current_user %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-yellow btn-sm">My dashboard</a>
+      <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-wood btn-sm" type="submit">Log out</button></form>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="{{ 'active' if request.endpoint == 'login' }}">Log in</a>
+      <a href="{{ url_for('register') }}" class="btn btn-yellow btn-sm">Join free</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="page">{% block content %}{% endblock %}</main>
+<footer class="footer wood">© {{ today[:4] }} Woodgrain Library · Fines ₹{{ FINE_PER_DAY }}/day · Loans {{ LOAN_DAYS }} days</footer>
+{% endblock %}

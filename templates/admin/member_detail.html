@@ -1,0 +1,31 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, loan_status, empty %}
+{% block title %}{{ member.name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div style="display:flex;gap:1rem;align-items:center"><div class="avatar" style="width:60px;height:60px;font-size:1.5rem">{{ member.name[:1]|upper }}</div><div><h1>{{ member.name }}</h1><p>Member #{{ member.member_id }} · joined {{ member.join_date|nice_date }}</p></div></div>
+  <div class="actions"><a class="btn btn-yellow" href="{{ url_for('edit_member', member_id=member.member_id) }}">✏️ Edit</a><a class="btn btn-ghost" href="{{ url_for('manage_members') }}">← All members</a></div></div>
+<section class="stats">
+  <div class="stat c-blue"><div class="num">{{ summary.borrowed }}</div><div class="lbl">Borrowed now</div></div>
+  <div class="stat c-red"><div class="num">{{ summary.overdue }}</div><div class="lbl">Overdue</div></div>
+  <div class="stat c-green"><div class="num">{{ summary.total_read }}</div><div class="lbl">Total loans</div></div>
+  <div class="stat c-yellow"><div class="num">{{ summary.pending_fine|inr }}</div><div class="lbl">Pending fine</div></div>
+</section>
+<div class="two-col" style="grid-template-columns:1fr 1.4fr">
+  <div class="card"><h2 class="mb">Details</h2>
+    <dl class="kv" style="grid-template-columns:90px 1fr"><dt>Email</dt><dd>{{ member.email or '—' }}</dd><dt>Phone</dt><dd>{{ member.phone or '—' }}</dd><dt>Address</dt><dd>{{ member.address or '—' }}</dd><dt>Login</dt><dd>{% if member.username %}<span class="badge green">{{ member.username }}</span>{% else %}<span class="badge">No login yet</span>{% endif %}</dd></dl>
+    {% if not member.username and member.email %}
+    <hr style="border:0;border-top:1px dashed var(--line);margin:1rem 0">
+    <h3 class="mb">Create a login</h3>
+    <form method="post" action="{{ url_for('create_member_login', member_id=member.member_id) }}">{{ csrf() }}
+      <div class="field"><label>Username</label><input name="username" type="text" required></div>
+      <div class="field"><label>Password</label><input name="password" type="password" required minlength="6"></div>
+      <button class="btn btn-green btn-sm" type="submit">Create login</button></form>
+    {% endif %}
+  </div>
+  <div class="card"><h2 class="mb">Borrowing history</h2>
+    {% if loans %}<div class="table-wrap"><table><thead><tr><th>Loan</th><th>Book</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for l in loans %}<tr class="{{ 'row-overdue' if l.is_overdue }}"><td>#{{ l.loan_id }}</td><td class="title">{{ l.title }}</td><td class="nowrap">{{ l.due_date|nice_date }}</td><td>{{ loan_status(l) }}{% if l.current_fine %} <span class="badge red">{{ l.current_fine|inr }}</span>{% endif %}</td>
+      <td>{% if l.is_active %}<form method="post" action="{{ url_for('return_loan', loan_id=l.loan_id) }}">{{ csrf() }}<button class="btn btn-green btn-sm" type="submit">Return</button></form>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{{ empty('📭','This member has not borrowed anything yet.') }}{% endif %}</div>
+</div>
+{% endblock %}

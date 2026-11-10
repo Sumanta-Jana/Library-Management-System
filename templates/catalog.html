@@ -1,0 +1,25 @@
+{% extends "shell.html" if current_user and current_user.role == 'Member' else "public.html" %}
+{% from "partials/_macros.html" import cover, stock, pager, empty %}
+{% block title %}Browse books{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Browse books</h1><p>{{ result.total }} title{{ '' if result.total == 1 else 's' }} on our shelves</p></div></div>
+<form class="filters card" method="get" style="padding:1rem">
+  <div class="grow"><label for="q">Search</label><input id="q" type="search" name="q" value="{{ args.get('q','') }}" placeholder="Title, author, ISBN or category…"></div>
+  <div><label for="category">Category</label><select id="category" name="category"><option value="">All</option>{% for c in categories %}<option value="{{ c.category }}" {{ 'selected' if args.get('category') == c.category }}>{{ c.category }} ({{ c.n }})</option>{% endfor %}</select></div>
+  <div><label for="availability">Status</label><select id="availability" name="availability"><option value="">Any</option><option value="available" {{ 'selected' if args.get('availability') == 'available' }}>Available</option><option value="out" {{ 'selected' if args.get('availability') == 'out' }}>All out</option></select></div>
+  <div><label for="sort">Sort by</label><select id="sort" name="sort">{% for k, v in [('title','Title'),('author','Author'),('newest','Newest'),('year','Year'),('popular','Most borrowed')] %}<option value="{{ k }}" {{ 'selected' if args.get('sort','title') == k }}>{{ v }}</option>{% endfor %}</select></div>
+  <button class="btn btn-yellow" type="submit">Search</button>
+  {% if args %}<a class="btn btn-ghost" href="{{ url_for('catalog') }}">Clear</a>{% endif %}
+</form>
+{% if result["items"] %}
+<div class="book-grid">
+  {% for b in result["items"] %}
+  <a class="book-card" href="{{ url_for('book_detail', book_id=b.book_id) }}">
+    {{ cover(b) }}<h3>{{ b.title }}</h3><div class="meta">{{ b.author }}{% if b.publication_year %} · {{ b.publication_year }}{% endif %}</div>
+    <div class="foot">{{ stock(b) }}{% if b.category %}<span class="badge purple">{{ b.category }}</span>{% endif %}</div>
+  </a>
+  {% endfor %}
+</div>
+{{ pager(result, 'catalog', args) }}
+{% else %}<div class="card">{{ empty('🔍', 'No books matched your search. Try different words or clear the filters.') }}</div>{% endif %}
+{% endblock %}

@@ -1,0 +1,187 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | Library Management System{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <h1>Admin Dashboard</h1>
+    <p>Welcome to your Library Management System.</p>
+
+    <!-- Dashboard Statistics -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/book.png') }}"
+                 alt="Books" width="35">
+            <h3>Total Book Titles</h3>
+            <h2>{{ stats.get('total_books', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/book.png') }}"
+                 alt="Copies" width="35">
+            <h3>Total Copies</h3>
+            <h2>{{ stats.get('total_copies', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/book.png') }}"
+                 alt="Available books" width="35">
+            <h3>Available Copies</h3>
+            <h2>{{ stats.get('available_copies', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/members.png') }}"
+                 alt="Members" width="35">
+            <h3>Total Members</h3>
+            <h2>{{ stats.get('total_members', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/issue.png') }}"
+                 alt="Issued books" width="35">
+            <h3>Issued Books</h3>
+            <h2>{{ stats.get('issued_books', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/return.png') }}"
+                 alt="Overdue books" width="35">
+            <h3>Overdue Books</h3>
+            <h2>{{ stats.get('overdue_books', 0) }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <img src="{{ url_for('static', filename='images/icons/reports.png') }}"
+                 alt="Fine" width="35">
+            <h3>Total Fine Collected</h3>
+            <h2>₹{{ "%.2f"|format(stats.get('total_fine', 0)) }}</h2>
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <section class="dashboard-section">
+
+        <h2>Quick Actions</h2>
+
+        <div class="action-grid">
+
+            <div class="action-card">
+                <img src="{{ url_for('static', filename='images/icons/book.png') }}"
+                     alt="Books" width="35">
+                <h3>Manage Books</h3>
+            </div>
+
+            <div class="action-card">
+                <img src="{{ url_for('static', filename='images/icons/members.png') }}"
+                     alt="Members" width="35">
+                <h3>Manage Members</h3>
+            </div>
+
+            <div class="action-card">
+                <img src="{{ url_for('static', filename='images/icons/issue.png') }}"
+                     alt="Issue" width="35">
+                <h3>Issue Books</h3>
+            </div>
+
+            <div class="action-card">
+                <img src="{{ url_for('static', filename='images/icons/return.png') }}"
+                     alt="Return" width="35">
+                <h3>Return Books</h3>
+            </div>
+
+            <div class="action-card">
+                <img src="{{ url_for('static', filename='images/icons/reports.png') }}"
+                     alt="Reports" width="35">
+                <h3>View Reports</h3>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Recent Book Issues -->
+    <section class="dashboard-section">
+
+        <h2>Recent Book Issues</h2>
+
+        {% if recent_issues %}
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Book Title</th>
+                        <th>Member Name</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for issue in recent_issues %}
+                    <tr>
+                        <td>{{ issue[0] }}</td>
+                        <td>{{ issue[1] }}</td>
+                        <td>{{ issue[2] }}</td>
+                        <td>{{ issue[3] }}</td>
+                        <td>{{ issue[4] }}</td>
+                        <td>{{ issue[5] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+            <p>No recent book issues found.</p>
+        {% endif %}
+
+    </section>
+
+    <!-- Recent Members -->
+    <section class="dashboard-section">
+
+        <h2>Recent Members</h2>
+
+        {% if recent_members %}
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Member ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Join Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for member in recent_members %}
+                    <tr>
+                        <td>{{ member[0] }}</td>
+                        <td>{{ member[1] }}</td>
+                        <td>{{ member[2] }}</td>
+                        <td>{{ member[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+            <p>No recent members found.</p>
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

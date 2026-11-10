@@ -1,0 +1,256 @@
+import os
+import secrets
+from datetime import timedelta
+from functools import wraps
+
+import click
+from flask import (Flask, abort, flash, g, redirect, render_template,
+                   request, session, url_for)
+from flask_wtf.csrf import CSRFError, CSRFProtect
+
+import authentication
+import members
+import reports
+from database import create_tables
+
+BASE_FOLDER = os.path.dirname(os.path.abspath(__file__))
+
+
+# ---------- Secret key (it signs the session cookie) ----------
+
+def load_secret_key():
+    """Use the environment variable, or make a random key file once."""
+    key = os.environ.get("LIBRARY_SECRET_KEY")
+    if key:
+        return key
+    key_file = os.path.join(BASE_FOLDER, "secret_key.txt")
+    if not os.path.exists(key_file):
+        with open(key_file, "w") as file:
+            file.write(secrets.token_hex(32))
+    with open(key_file) as file:
+        return file.read().strip()
+
+
+
+# ---------- Create the app ----------
+
+app = Flask(__name__)
+app.config.update(
+    SECRET_KEY=load_secret_key(),
+    SESSION_COOKIE_HTTPONLY=True,      # JavaScript cannot read the cookie
+    SESSION_COOKIE_SAMESITE="Lax",     # the cookie is not sent from other sites
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=2),
+)
+csrf = CSRFProtect(app)                # every POST form needs a CSRF token
+
+create_tables()                        # the same library.db, tables if missing
+
+
+# ---------- Who is logged in? (checked on the server, every request) ----------
+
+@app.before_request
+def load_logged_in_user():
+    g.user = None
+    user_id = session.get("user_id")
+    if user_id is not None:
+        g.user = authentication.get_user_by_id(user_id)
+        if g.user is None:             # the account was deleted
+            session.clear()
+
+
+@app.context_processor
+def inject_user():
+    """Makes 'current_user' available in every HTML template."""
+    return {"current_user": g.user}
+
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
+# ---------- Access control ----------
+
+def role_required(role):
+    """Only allow users with this role. Otherwise login page or 403 error."""
+    def decorator(view):
+        @wraps(view)
+        def wrapped(*args, **kwargs):
+            if g.user is None:
+                flash("Please log in first.", "warning")
+                return redirect(url_for("login"))
+            if g.user["role"] != role:
+                abort(403)
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+admin_required = role_required("Admin")
+member_required = role_required("Member")
+
+
+def dashboard_url_for(user):
+    """Each role has its own dashboard."""
+    if user["role"] == "Admin":
+
+        return url_for("admin_dashboard")
+    return url_for("member_dashboard")
+
+
+# ---------- Public pages ----------
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if g.user is not None:
+        return redirect(dashboard_url_for(g.user))
+
+    username = ""
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        ok, result = authentication.login(username, password)
+        if not ok:
+            flash(result, "danger")
+            return render_template("login.html", username=username)
+
+        session.clear()                       # start a fresh session
+        session["user_id"] = result["user_id"]  # only the ID is saved
+        session.permanent = True
+        flash(f"Welcome, {result['username']}!", "success")
+        return redirect(dashboard_url_for(result))
+
+
+    return render_template("login.html", username=username)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if g.user is not None:
+        return redirect(dashboard_url_for(g.user))
+
+    form = {}
+    if request.method == "POST":
+        form = {key: request.form.get(key, "").strip()
+                for key in ("name", "username", "email", "phone", "address")}
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        if password != confirm:
+            flash("The two passwords are not the same.", "danger")
+        else:
+            ok, message = authentication.register_new_member(
+                form["name"], form["username"], form["email"],
+                form["phone"], form["address"], password)
+            if ok:
+                flash(message, "success")
+                return redirect(url_for("login"))
+            flash(message, "danger")
+
+    return render_template("register.html", form=form)
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
+
+
+@app.route("/dashboard")
+def dashboard():
+    """Send the user to the right dashboard."""
+    if g.user is None:
+        return redirect(url_for("login"))
+    return redirect(dashboard_url_for(g.user))
+
+
+# ---------- Dashboards ----------
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    stats = reports.dashboard_stats()
+    if stats is None:
+        flash("Could not read the database.", "danger")
+        stats = {}
+    return render_template(
+        "admin_dashboard.html",
+        stats=stats,
+        recent_issues=reports.recent_issues_rows() or [],
+        recent_members=reports.recent_members_rows() or [])
+
+
+@app.route("/member/dashboard")
+@member_required
+def member_dashboard():
+    # The member ID comes from the server session, never from the browser
+
+    member_id = g.user["member_id"]
+    member = members.get_member_full(member_id)
+    if member is None:
+        abort(404)
+
+    data = reports.member_dashboard_data(member_id)
+    if data is None:
+        flash("Could not read the database.", "danger")
+        stats, issued = {"borrowed": 0, "overdue": 0, "pending_fine": 0}, []
+    else:
+        stats, issued = data
+
+    ok, name, history = reports.member_history_rows(member_id)
+    return render_template("member_dashboard.html", member=member,
+                           stats=stats, issued=issued, history=history)
+
+
+# ---------- Error pages ----------
+
+@app.errorhandler(403)
+def forbidden(error):
+    return render_template("error.html", code=403,
+                           message="You do not have permission to open this page."), 403
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("error.html", code=404,
+                           message="This page was not found."), 404
+
+
+@app.errorhandler(CSRFError)
+
+def csrf_failed(error):
+    return render_template("error.html", code=400,
+                           message="Your form has expired. Go back, refresh the page and try again."), 400
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return render_template("error.html", code=500,
+                           message="Something went wrong on the server."), 500
+
+
+# ---------- First admin account ----------
+
+@app.cli.command("create-admin")
+def create_admin_command():
+    """Create the first admin:  flask --app app create-admin"""
+    username = click.prompt("Admin username")
+    password = click.prompt("Password (at least 6 characters)",
+                            hide_input=True, confirmation_prompt=True)
+    ok, message = authentication.create_admin(username, password)
+    click.echo(message)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)    # debug=True is only for your own computer

@@ -1,0 +1,139 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | Library Management System{% endblock %}
+
+{% block content %}
+
+<section class="dashboard">
+
+    <div class="dashboard-header">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p>Welcome to your Library Management System.</p>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-container">
+
+        <div class="stat-card">
+            <h3>Total Book Titles</h3>
+            <p>{{ stats.get('total_books', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total Copies</h3>
+            <p>{{ stats.get('total_copies', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Available Copies</h3>
+            <p>{{ stats.get('available_copies', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total Members</h3>
+            <p>{{ stats.get('total_members', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Issued Books</h3>
+            <p>{{ stats.get('issued_books', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Overdue Books</h3>
+            <p>{{ stats.get('overdue_books', 0) }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total Fine Collected</h3>
+            <p>₹{{ "%.2f"|format(stats.get('total_fine', 0)) }}</p>
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <section class="dashboard-section">
+        <h2>Quick Actions</h2>
+
+        <div class="action-container">
+            <a href="#" class="action-card">Manage Books</a>
+            <a href="#" class="action-card">Manage Members</a>
+            <a href="#" class="action-card">Issue Books</a>
+            <a href="#" class="action-card">Return Books</a>
+            <a href="#" class="action-card">View Reports</a>
+        </div>
+    </section>
+
+    <!-- Recent Issues -->
+    <section class="dashboard-section">
+        <h2>Recent Book Issues</h2>
+
+        {% if recent_issues %}
+        <div class="table-container">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Book Title</th>
+                        <th>Member Name</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for issue in recent_issues %}
+                    <tr>
+                        {% for value in issue %}
+                        <td>{{ value if value is not none else '-' }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No recent book issues found.</p>
+        {% endif %}
+    </section>
+
+    <!-- Recent Members -->
+    <section class="dashboard-section">
+        <h2>Recent Members</h2>
+
+        {% if recent_members %}
+        <div class="table-container">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Member ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Join Date</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for member in recent_members %}
+                    <tr>
+                        {% for value in member %}
+                        <td>{{ value if value is not none else '-' }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No recent members found.</p>
+        {% endif %}
+    </section>
+
+</section>
+
+{% endblock %}
+```

@@ -1,0 +1,23 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import csrf, cover %}
+{% block title %}{{ 'Edit book' if book else 'Add book' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ '✏️ Edit book' if book else '📗 Add a new book' }}</h1><p>{{ 'Book #' ~ book.book_id if book else 'Fill in the details below.' }}</p></div><a class="btn btn-ghost" href="{{ url_for('manage_books') }}">← Back</a></div>
+<form class="card" method="post" enctype="multipart/form-data" style="max-width:860px">
+  {{ csrf() }}
+  <div class="grid-2">
+    <div class="field"><label for="title">Title *</label><input id="title" name="title" type="text" value="{{ form.title }}" required></div>
+    <div class="field"><label for="author">Author *</label><input id="author" name="author" type="text" value="{{ form.author }}" required></div>
+    <div class="field"><label for="isbn">ISBN *</label><input id="isbn" name="isbn" type="text" value="{{ form.isbn }}" required><div class="hint">10 or 13 digits (ISBN-10 may end in X)</div></div>
+    <div class="field"><label for="category">Category</label><input id="category" name="category" type="text" list="cats" value="{{ form.category }}"><datalist id="cats">{% for c in categories %}<option value="{{ c.category }}">{% endfor %}</datalist></div>
+    <div class="field"><label for="publisher">Publisher</label><input id="publisher" name="publisher" type="text" value="{{ form.publisher }}"></div>
+    <div class="field"><label for="publication_year">Publication year</label><input id="publication_year" name="publication_year" type="number" min="1000" value="{{ form.publication_year }}"></div>
+    <div class="field"><label for="total_copies">Total copies *</label><input id="total_copies" name="total_copies" type="number" min="1" value="{{ form.total_copies }}" required>
+      {% if book %}<div class="hint">{{ book.total_copies - book.available_copies }} currently issued — available copies update automatically.</div>{% endif %}</div>
+    <div class="field"><label for="cover">Cover image</label><input id="cover" name="cover" type="file" accept="image/png,image/jpeg,image/gif,image/webp"><div class="hint">JPG, PNG, GIF or WEBP · max 3 MB. Leave empty for a colourful auto cover.</div>
+      {% if book and book.cover_image %}<label style="margin-top:.5rem;font-weight:500"><input type="checkbox" name="remove_cover" value="1"> Remove current cover</label>{% endif %}</div>
+  </div>
+  <div class="field"><label for="description">Description</label><textarea id="description" name="description">{{ form.description }}</textarea></div>
+  <div class="actions"><button class="btn" type="submit">{{ 'Save changes' if book else 'Add book' }}</button><a class="btn btn-ghost" href="{{ url_for('manage_books') }}">Cancel</a></div>
+</form>
+{% endblock %}

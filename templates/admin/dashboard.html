@@ -1,0 +1,46 @@
+{% extends "shell.html" %}
+{% from "partials/_macros.html" import cover, loan_status, empty %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Good day, {{ current_user.username }} 👋</h1><p>Here is what's happening in the library today.</p></div>
+  <div class="actions no-print"><a class="btn" href="{{ url_for('manage_loans') }}">🔄 Issue a book</a><a class="btn btn-yellow" href="{{ url_for('add_book') }}">＋ Add book</a></div></div>
+
+<section class="stats">
+  <div class="stat c-yellow"><div class="num">{{ stats.total_books }}</div><div class="lbl">Book titles ({{ stats.total_copies }} copies)</div><span class="ico">📖</span></div>
+  <div class="stat c-green"><div class="num">{{ stats.available_copies }}</div><div class="lbl">Copies available</div><span class="ico">✅</span></div>
+  <div class="stat c-blue"><div class="num">{{ stats.total_members }}</div><div class="lbl">Members</div><span class="ico">👥</span></div>
+  <div class="stat c-purple"><div class="num">{{ stats.issued_books }}</div><div class="lbl">Currently issued</div><span class="ico">🔄</span></div>
+  <div class="stat c-red"><div class="num">{{ stats.overdue_books }}</div><div class="lbl">Overdue</div><span class="ico">⏰</span></div>
+  <div class="stat c-teal"><div class="num">{{ stats.fines_collected|inr }}</div><div class="lbl">Fines collected · {{ stats.fines_pending|inr }} pending</div><span class="ico">💰</span></div>
+</section>
+
+<div class="two-col">
+  <div class="card"><div class="card-head"><h2>Books issued · last 7 days</h2></div>
+    {% set peak = (daily|map(attribute='n')|max) or 1 %}
+    <div class="bars">{% for d in daily %}
+      <div class="bar-col"><span class="v">{{ d.n }}</span><div class="bar" style="height:{{ (d.n / peak * 100)|round }}%;--c:var({{ ['--clay-red','--clay-yellow','--clay-green','--clay-blue','--clay-purple','--clay-pink','--clay-teal'][loop.index0 % 7] }})"></div><span class="l">{{ d.label }}</span></div>{% endfor %}</div></div>
+  <div class="card"><div class="card-head"><h2>Shelf by category</h2></div>
+    {% set most = (categories|map(attribute='n')|max) or 1 %}
+    {% for c in categories %}<div class="hbar"><div class="row"><span>{{ c.name }}</span><span>{{ c.n }}</span></div><div class="track"><div class="fill" style="width:{{ (c.n / most * 100)|round }}%;--c:var({{ ['--clay-green','--clay-yellow','--clay-blue','--clay-pink','--clay-purple','--clay-teal'][loop.index0 % 6] }})"></div></div></div>
+    {% else %}{{ empty('🗂️','No books yet.') }}{% endfor %}</div>
+</div>
+
+<div class="two-col">
+  <div class="card"><div class="card-head"><h2>Recent activity</h2><a class="btn btn-ghost btn-sm" href="{{ url_for('manage_loans', status='all') }}">View all</a></div>
+    {% if recent_loans %}<div class="table-wrap"><table><thead><tr><th>Loan</th><th>Book</th><th>Member</th><th>Due</th><th>Status</th></tr></thead><tbody>
+      {% for l in recent_loans %}<tr class="{{ 'row-overdue' if l.is_overdue }}"><td>#{{ l.loan_id }}</td><td class="title">{{ l.title }}</td><td>{{ l.member_name }}</td><td class="nowrap">{{ l.due_date|nice_date }}</td><td>{{ loan_status(l) }}</td></tr>{% endfor %}
+    </tbody></table></div>{% else %}{{ empty('📭','No loans yet — issue your first book!') }}{% endif %}</div>
+  <div class="card"><div class="card-head"><h2>⏰ Overdue</h2></div>
+    {% for l in overdue %}<div class="list-item"><div class="grow"><div class="t">{{ l.title }}</div><div class="muted small">{{ l.member_name }} · {{ l.overdue_days }} days late</div></div><span class="badge red">{{ l.current_fine|inr }}</span></div>
+    {% else %}{{ empty('🎉','Nothing overdue. Lovely!') }}{% endfor %}</div>
+</div>
+
+<div class="two-col" style="grid-template-columns:1fr 1fr">
+  <div class="card"><div class="card-head"><h2>🏆 Most borrowed</h2></div>
+    {% for b in top %}<div class="list-item"><span class="rank">{{ loop.index }}</span>{{ cover(b, true) }}<div class="grow"><div class="t">{{ b.title }}</div><div class="muted small">{{ b.author }}</div></div><span class="badge yellow">{{ b.n }}×</span></div>
+    {% else %}{{ empty('📚','Borrowing stats appear here.') }}{% endfor %}</div>
+  <div class="card"><div class="card-head"><h2>🆕 New members</h2><a class="btn btn-ghost btn-sm" href="{{ url_for('manage_members') }}">View all</a></div>
+    {% for m in recent_members %}<div class="list-item"><div class="avatar">{{ m.name[:1]|upper }}</div><div class="grow"><div class="t">{{ m.name }}</div><div class="muted small">{{ m.email or '—' }}</div></div><span class="muted small">{{ m.join_date|nice_date }}</span></div>
+    {% else %}{{ empty('👥','No members yet.') }}{% endfor %}</div>
+</div>
+{% endblock %}
